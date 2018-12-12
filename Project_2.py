@@ -19,7 +19,7 @@ def startProject():
     alg_description  = "Type the number of the algorithm you want to run.\n"
     alg_description += "\t1)  Forward Selection\n"
     alg_description += "\t2)  Backward Elimination\n"
-    alg_description += "\t3)  Bertie's Special Algorithm.\n"
+    alg_description += "\t3)  Carlos's Special Algorithm.\n"
 
     print(alg_description)
     
@@ -129,13 +129,14 @@ def testAccuracy(class_predictions, class_data):
 Function for forward selection feature search
 """
 def forward_selection(data):
-    current_features = []
     num_features = data.shape[1]
-    best_accuracy = 0
+    current_features = []
+    best_global_accuracy = 0
+    best_features = []
 
     for i in range(1,num_features):
-        #print("On the {}th level of the search tree".format(i))
         feature_add = []
+        best_local_accuracy = 0
 
         for k in range(1, num_features):
             if k in current_features:
@@ -144,21 +145,55 @@ def forward_selection(data):
             accuracy = leave_one_evaluation(data[:,test_features])
             print("\t\tUsing feature(s) {features} accuracy is {accuracy}%".format(features=current_features+[k], accuracy=accuracy))
 
-            if accuracy > best_accuracy:
-                best_accuracy = accuracy
+            if accuracy > best_local_accuracy:
+                best_local_accuracy = accuracy
                 feature_add = k
 
         if feature_add:
             current_features.append(feature_add)
-        print("\nFeature {} was best, accuracy is {}\n".format(feature_add, best_accuracy))
-    print("Finished search!! The best feature subset is {}, which has an accuracy of {}".format(current_features, best_accuracy))
+            if best_local_accuracy > best_global_accuracy:
+                best_global_accuracy = best_local_accuracy
+                best_features[:] = current_features
+                print("\nFeature set {} was best, accuracy is {}\n".format(current_features, best_local_accuracy))
+            else:
+                print("(Warning, Accuracy has decreased! Continuing search in case of local maxima)")
+                print("\nFeature set {} was best, accuracy is {}\n".format(current_features, best_local_accuracy))
+    print("Finished search!! The best feature subset is {}, which has an accuracy of {}".format(best_features, best_global_accuracy))
 
-    #return current_features
 """
 Function for backward elimination feature search
 """
 def backward_elimination(data):
-    pass
+    num_features = data.shape[1]
+    current_features = list(range(1,num_features))
+    best_global_accuracy = 0
+    best_features = list(range(1,num_features))
+
+    for i in range(1,num_features):
+        feature_sub = []
+        best_local_accuracy = 0
+
+        for k in range(1, num_features):
+            if k not in current_features:
+                continue
+            test_features = [n for n in current_features if n != k]
+            accuracy = leave_one_evaluation(data[:,[0]+test_features])
+            print("\t\tUsing feature(s) {features} accuracy is {accuracy}%".format(features=test_features, accuracy=accuracy))
+
+            if accuracy > best_local_accuracy:
+                best_local_accuracy = accuracy
+                feature_sub = k
+
+        if feature_sub:
+            current_features = [n for n in current_features if n != feature_sub]
+            if best_local_accuracy > best_global_accuracy:
+                best_global_accuracy = best_local_accuracy
+                best_features[:] = current_features
+                print("\nFeature set {} was best, accuracy is {}\n".format(current_features, best_local_accuracy))
+            else:
+                print("(Warning, Accuracy has decreased! Continuing search in case of local maxima)")
+                print("\nFeature set {} was best, accuracy is {}\n".format(current_features, best_local_accuracy))
+    print("Finished search!! The best feature subset is {}, which has an accuracy of {}".format(best_features, best_global_accuracy))
 
 """
 Function for special algorithm feature search
